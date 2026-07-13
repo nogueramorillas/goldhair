@@ -183,7 +183,7 @@ async function initDatabase(dataDir) {
     ['shop_phone', ''],
     ['shop_email', ''],
     ['instagram_url', 'https://www.instagram.com/gold_hair_yassine/'],
-    ['google_maps_url', 'https://www.google.com/maps?q=Gold+Hair,41.5723482,2.2354667&hl=es&z=17&output=embed'],
+    ['google_maps_url', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2984.8737542015233!2d2.2304167765730143!3d41.571976834524484!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4b9000f261a53%3A0x8b56a1b4e3b02f6d!2sGold%20Hair!5e0!3m2!1ses!2ses!4v1783947922183!5m2!1ses!2ses'],
     ['open_time', '09:00'],
     ['close_time', '20:00'],
     ['open_days', '1,2,3,4,5,6'],
