@@ -6,6 +6,7 @@ let agendaBookings = [];
 let agendaBlocked = [];
 let agendaBlockedDays = [];
 let pendingPhotoFile = null;
+let pendingBarberPhotoFile = null;
 
 // Wrapper for all admin API calls – shows login on 401
 async function adminFetch(url, opts = {}) {
@@ -125,7 +126,7 @@ async function loadBarbersCards() {
   container.innerHTML = allBarbers.map(b => `
     <div class="barber-card">
       <div class="barber-avatar-lg" style="background:${b.color}22;border:2px solid ${b.color}">
-        <span style="color:${b.color};font-size:28px">✂</span>
+        ${b.photo_url ? `<img src="${b.photo_url}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : `<span style="color:${b.color};font-size:28px">✂</span>`}
       </div>
       <h3>${b.name}</h3>
       <p class="barber-card-status">
@@ -143,9 +144,15 @@ function openBarberModal(id) {
   document.getElementById('barberName').value = '';
   document.getElementById('barberColor').value = '#c8a96e';
   document.getElementById('barberColorHex').textContent = '#c8a96e';
+  document.getElementById('barberOpenTime').value = '';
+  document.getElementById('barberCloseTime').value = '';
   document.getElementById('barberActiveGroup').style.display = 'none';
   document.getElementById('barberId').value = '';
   document.getElementById('barberModalTitle').textContent = 'Nuevo barbero';
+  document.getElementById('barberPhotoPreview').classList.add('hidden');
+  document.getElementById('barberPhotoPreview').src = '';
+  document.getElementById('barberPhotoUploadBtn').textContent = '📷 Subir foto';
+  pendingBarberPhotoFile = null;
 
   if (id) {
     const b = allBarbers.find(x => x.id === id);
@@ -154,9 +161,16 @@ function openBarberModal(id) {
       document.getElementById('barberName').value = b.name;
       document.getElementById('barberColor').value = b.color;
       document.getElementById('barberColorHex').textContent = b.color;
+      document.getElementById('barberOpenTime').value = b.open_time || '';
+      document.getElementById('barberCloseTime').value = b.close_time || '';
       document.getElementById('barberActive').value = b.active;
       document.getElementById('barberActiveGroup').style.display = 'block';
       document.getElementById('barberModalTitle').textContent = 'Editar barbero';
+      if (b.photo_url) {
+        document.getElementById('barberPhotoPreview').src = b.photo_url;
+        document.getElementById('barberPhotoPreview').classList.remove('hidden');
+        document.getElementById('barberPhotoUploadBtn').textContent = '📷 Cambiar foto';
+      }
     }
   }
 }
@@ -165,30 +179,54 @@ document.getElementById('barberColor')?.addEventListener('input', function() {
   document.getElementById('barberColorHex').textContent = this.value;
 });
 
+function previewBarberPhoto(input) {
+  if (input.files && input.files[0]) {
+    pendingBarberPhotoFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('barberPhotoPreview');
+      preview.src = e.target.result;
+      preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
 async function saveBarber() {
   const id = document.getElementById('barberId').value;
   const name = document.getElementById('barberName').value.trim();
   const color = document.getElementById('barberColor').value;
   const active = document.getElementById('barberActive').value;
+  const open_time = document.getElementById('barberOpenTime').value;
+  const close_time = document.getElementById('barberCloseTime').value;
   if (!name) return showToast('El nombre es obligatorio', 'error');
 
   const url = id ? `/api/admin/barbers/${id}` : '/api/admin/barbers';
   const method = id ? 'PUT' : 'POST';
-  const body = id ? { name, color, active: Number(active) } : { name, color };
+  const body = id ? { name, color, active: Number(active), open_time, close_time } : { name, color, open_time, close_time };
 
   const res = await adminFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!res) return;
   const data = await res.json();
-  if (data.success) {
-    closeBarberModal();
-    await loadBarbers();
-    loadBarbersCards();
-    populateBarberSelects();
-    showToast(id ? 'Barbero actualizado' : 'Barbero añadido', 'success');
-  } else showToast(data.error || 'Error', 'error');
+  if (!data.success) return showToast(data.error || 'Error', 'error');
+
+  const barberId = id || data.id;
+
+  if (pendingBarberPhotoFile) {
+    const fd = new FormData();
+    fd.append('photo', pendingBarberPhotoFile);
+    await adminFetch(`/api/admin/barbers/${barberId}/photo`, { method: 'POST', body: fd });
+    pendingBarberPhotoFile = null;
+  }
+
+  closeBarberModal();
+  await loadBarbers();
+  loadBarbersCards();
+  populateBarberSelects();
+  showToast(id ? 'Barbero actualizado' : 'Barbero añadido', 'success');
 }
 
-function closeBarberModal() { document.getElementById('barberModal').classList.add('hidden'); }
+function closeBarberModal() { document.getElementById('barberModal').classList.add('hidden'); pendingBarberPhotoFile = null; }
 function closeBarberModalOnOverlay(e) { if (e.target === document.getElementById('barberModal')) closeBarberModal(); }
 
 function populateBarberSelects() {

@@ -98,6 +98,40 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
   });
 }
 
+async function sendAdminNotification(booking, service, barber, settings) {
+  const t = getTransporter();
+  if (!t || !settings.shop_email) {
+    console.log('[email] Notificación admin omitida (email no configurado o sin shop_email)');
+    return;
+  }
+
+  const shopName = settings.shop_name || 'Gold Hair';
+
+  await t.sendMail({
+    from: `${shopName} <${process.env.GMAIL_USER}>`,
+    to: settings.shop_email,
+    subject: `🔔 Nueva reserva: ${booking.client_name} - ${formatDateES(booking.date)}`,
+    html: `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#f0f0f0;font-family:Arial,sans-serif">
+<div style="max-width:480px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden">
+  <div style="background:#111;padding:24px;text-align:center">
+    <h1 style="margin:0;color:#c8a96e;font-size:20px;letter-spacing:2px">🔔 Nueva reserva</h1>
+  </div>
+  <div style="padding:24px">
+    <p style="margin:0 0 12px;color:#333"><strong>${booking.client_name}</strong> ha reservado cita:</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px">
+      <tr><td style="padding:6px 0;color:#777">Servicio</td><td style="padding:6px 0;text-align:right;font-weight:700">${service.name}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Barbero</td><td style="padding:6px 0;text-align:right;font-weight:700">${barber.name}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Fecha</td><td style="padding:6px 0;text-align:right;font-weight:700">${formatDateES(booking.date)}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Hora</td><td style="padding:6px 0;text-align:right;font-weight:700">${booking.time_start} - ${booking.time_end}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Teléfono</td><td style="padding:6px 0;text-align:right;font-weight:700">${booking.client_phone || '—'}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Email</td><td style="padding:6px 0;text-align:right;font-weight:700">${booking.client_email || '—'}</td></tr>
+      <tr><td style="padding:6px 0;color:#777">Precio</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#c8a96e">${service.price}€</td></tr>
+    </table>
+  </div>
+</div></body></html>`
+  });
+}
+
 async function sendVerificationCode(email, code, settings) {
   const t = getTransporter();
   if (!t) throw new Error('Email no configurado');
@@ -120,4 +154,4 @@ async function sendVerificationCode(email, code, settings) {
   });
 }
 
-module.exports = { sendBookingConfirmation, sendVerificationCode };
+module.exports = { sendBookingConfirmation, sendAdminNotification, sendVerificationCode };

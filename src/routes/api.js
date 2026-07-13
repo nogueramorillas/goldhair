@@ -3,8 +3,8 @@ const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
-const { getDb, getSettings, generateAvailableSlots, findEarliest, timeToMinutes, minutesToTime } = require('../database');
-const { sendBookingConfirmation } = require('../email');
+const { getDb, getSettings, generateAvailableSlots, findEarliest, barberHours, timeToMinutes, minutesToTime } = require('../database');
+const { sendBookingConfirmation, sendAdminNotification } = require('../email');
 const { sendVerificationSMS, isConfigured: smsConfigured } = require('../sms');
 
 function normalizePhone(p) {
@@ -54,7 +54,7 @@ function createApiRouter(dataDir, uploadsDir) {
 
   router.get('/barbers', (req, res) => {
     const db = getDb();
-    const barbers = db.prepare('SELECT id, name, color FROM barbers WHERE active = 1 ORDER BY id').all();
+    const barbers = db.prepare('SELECT id, name, color, photo_url FROM barbers WHERE active = 1 ORDER BY id').all();
     res.json(barbers);
   });
 
@@ -73,7 +73,7 @@ function createApiRouter(dataDir, uploadsDir) {
     const db = getDb();
     const settings = getSettings();
 
-    const barber = db.prepare('SELECT id FROM barbers WHERE id = ? AND active = 1').get(barber_id);
+    const barber = db.prepare('SELECT * FROM barbers WHERE id = ? AND active = 1').get(barber_id);
     if (!barber) return res.status(404).json({ error: 'Barbero no encontrado' });
 
     const dayBlocked = db.prepare('SELECT id FROM blocked_days WHERE barber_id = ? AND date = ?').get(barber_id, date);
@@ -94,7 +94,8 @@ function createApiRouter(dataDir, uploadsDir) {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
     const minStart = date === today ? now.getHours() * 60 + now.getMinutes() : -1;
-    const available = generateAvailableSlots(settings.open_time, settings.close_time, Number(duration), bookings, blocked, minStart);
+    const { open_time, close_time } = barberHours(barber, settings);
+    const available = generateAvailableSlots(open_time, close_time, Number(duration), bookings, blocked, minStart);
     res.json({ available });
   });
 
@@ -201,7 +202,8 @@ function createApiRouter(dataDir, uploadsDir) {
     const todayStr = new Date().toISOString().split('T')[0];
     const nowObj = new Date();
     const minStartBook = date === todayStr ? nowObj.getHours() * 60 + nowObj.getMinutes() : -1;
-    const available = generateAvailableSlots(settings.open_time, settings.close_time, service.duration_minutes, bookings, blockedSlots, minStartBook);
+    const { open_time, close_time } = barberHours(barber, settings);
+    const available = generateAvailableSlots(open_time, close_time, service.duration_minutes, bookings, blockedSlots, minStartBook);
     if (!available.includes(time_start)) {
       return res.status(409).json({ error: 'La hora seleccionada ya no está disponible' });
     }
@@ -220,6 +222,8 @@ function createApiRouter(dataDir, uploadsDir) {
       sendBookingConfirmation(booking, service, barber, settings)
         .catch(e => console.error('[email error]', e.message));
     }
+    sendAdminNotification(booking, service, barber, settings)
+      .catch(e => console.error('[email admin notify error]', e.message));
   });
 
   router.get('/legal', (req, res) => {
@@ -323,18 +327,32 @@ function createApiRouter(dataDir, uploadsDir) {
   });
 
   router.post('/admin/barbers', requireAdmin, (req, res) => {
-    const { name, color } = req.body;
+    const { name, color, open_time, close_time } = req.body;
     if (!name) return res.status(400).json({ error: 'Nombre requerido' });
     const db = getDb();
-    const result = db.prepare('INSERT INTO barbers (name, color) VALUES (?, ?)').run(name, color || '#c8a96e');
+    const result = db.prepare('INSERT INTO barbers (name, color, open_time, close_time) VALUES (?, ?, ?, ?)')
+      .run(name, color || '#c8a96e', open_time || '', close_time || '');
     res.json({ success: true, id: result.lastInsertRowid });
   });
 
   router.put('/admin/barbers/:id', requireAdmin, (req, res) => {
-    const { name, color, active } = req.body;
-    getDb().prepare('UPDATE barbers SET name=?, color=?, active=? WHERE id=?')
-      .run(name, color || '#c8a96e', active ? 1 : 0, req.params.id);
+    const { name, color, active, open_time, close_time } = req.body;
+    getDb().prepare('UPDATE barbers SET name=?, color=?, active=?, open_time=?, close_time=? WHERE id=?')
+      .run(name, color || '#c8a96e', active ? 1 : 0, open_time || '', close_time || '', req.params.id);
     res.json({ success: true });
+  });
+
+  router.post('/admin/barbers/:id/photo', requireAdmin, upload.single('photo'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
+    const db = getDb();
+    const barber = db.prepare('SELECT photo_url FROM barbers WHERE id = ?').get(req.params.id);
+    if (barber && barber.photo_url) {
+      const oldPath = path.join(uploadsDir, path.basename(barber.photo_url));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+    const url = `/uploads/${req.file.filename}`;
+    db.prepare('UPDATE barbers SET photo_url = ? WHERE id = ?').run(url, req.params.id);
+    res.json({ success: true, url });
   });
 
   // Admin: bookings
@@ -372,7 +390,8 @@ function createApiRouter(dataDir, uploadsDir) {
       'SELECT time_start, time_end FROM bookings WHERE barber_id = ? AND date = ? AND status != "cancelled"'
     ).all(barber_id, date);
     const blocked = db.prepare('SELECT time_start, time_end FROM blocked_slots WHERE barber_id = ? AND date = ?').all(barber_id, date);
-    const available = generateAvailableSlots(settings.open_time, settings.close_time, service.duration_minutes, bookings, blocked);
+    const { open_time, close_time } = barberHours(barber, settings);
+    const available = generateAvailableSlots(open_time, close_time, service.duration_minutes, bookings, blocked);
     if (!available.includes(time_start)) {
       return res.status(409).json({ error: 'Hora no disponible' });
     }

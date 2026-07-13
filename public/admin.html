@@ -398,10 +398,30 @@
       <input type="text" id="barberName" placeholder="Nombre del barbero" class="select-control">
     </div>
     <div class="form-group">
+      <label>Foto de perfil</label>
+      <div class="photo-upload" id="barberPhotoUploadArea">
+        <img id="barberPhotoPreview" class="photo-preview hidden" src="" alt="preview">
+        <div id="barberPhotoUploadBtn" class="photo-upload-btn" onclick="document.getElementById('barberPhotoInput').click()">
+          <span>📷 Subir foto</span>
+        </div>
+        <input type="file" id="barberPhotoInput" accept="image/*" onchange="previewBarberPhoto(this)" style="display:none">
+      </div>
+    </div>
+    <div class="form-group">
       <label>Color de agenda</label>
       <div class="color-picker">
         <input type="color" id="barberColor" value="#c8a96e">
         <span id="barberColorHex">#c8a96e</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Hora de inicio (vacío = horario del negocio)</label>
+        <input type="time" id="barberOpenTime" class="select-control">
+      </div>
+      <div class="form-group">
+        <label>Hora de fin (vacío = horario del negocio)</label>
+        <input type="time" id="barberCloseTime" class="select-control">
       </div>
     </div>
     <div class="form-group" id="barberActiveGroup" style="display:none">

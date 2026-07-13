@@ -344,7 +344,7 @@ async function renderBarbersList() {
     return `
       <div class="barber-item ${state.barber?.id === b.id ? 'selected' : ''}" onclick="selectBarber(${b.id}, '${e.date || ''}', '${e.time || ''}')">
         <div class="barber-avatar" style="background:${b.color}22;border:2px solid ${b.color}">
-          <span style="color:${b.color}">✂</span>
+          ${b.photo_url ? `<img src="${b.photo_url}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : `<span style="color:${b.color}">✂</span>`}
         </div>
         <div class="barber-item-info">
           <div class="barber-item-name">${b.name}</div>

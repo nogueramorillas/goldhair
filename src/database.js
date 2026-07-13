@@ -109,6 +109,9 @@ async function initDatabase(dataDir) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       color TEXT NOT NULL DEFAULT '#c8a96e',
+      photo_url TEXT NOT NULL DEFAULT '',
+      open_time TEXT NOT NULL DEFAULT '',
+      close_time TEXT NOT NULL DEFAULT '',
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -188,6 +191,11 @@ async function initDatabase(dataDir) {
       verified_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Migrations for barbers created before photo/schedule columns existed
+  try { db._db.run("ALTER TABLE barbers ADD COLUMN photo_url TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db._db.run("ALTER TABLE barbers ADD COLUMN open_time TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db._db.run("ALTER TABLE barbers ADD COLUMN close_time TEXT NOT NULL DEFAULT ''"); } catch (_) {}
 
   const defaultSettings = [
     ['shop_name', 'Gold Hair'],
@@ -274,8 +282,17 @@ function generateAvailableSlots(openTime, closeTime, durationMinutes, bookings, 
   return available;
 }
 
+function barberHours(barber, settings) {
+  return {
+    open_time: (barber && barber.open_time && barber.open_time.trim()) || settings.open_time,
+    close_time: (barber && barber.close_time && barber.close_time.trim()) || settings.close_time
+  };
+}
+
 function findEarliest(barberId, durationMinutes) {
   const settings = getSettings();
+  const barber = db.prepare('SELECT * FROM barbers WHERE id = ?').get(barberId);
+  const { open_time, close_time } = barberHours(barber, settings);
   const openDays = settings.open_days.split(',').map(Number);
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
@@ -293,10 +310,10 @@ function findEarliest(barberId, durationMinutes) {
     ).all(barberId, dateStr);
     const blocked = db.prepare('SELECT time_start, time_end FROM blocked_slots WHERE barber_id = ? AND date = ?').all(barberId, dateStr);
     const minStart = dateStr === todayStr ? nowMinutes : -1;
-    const slots = generateAvailableSlots(settings.open_time, settings.close_time, durationMinutes, bookings, blocked, minStart);
+    const slots = generateAvailableSlots(open_time, close_time, durationMinutes, bookings, blocked, minStart);
     if (slots.length) return { date: dateStr, time: slots[0] };
   }
   return null;
 }
 
-module.exports = { initDatabase, getDb, getSettings, generateAvailableSlots, findEarliest, timeToMinutes, minutesToTime };
+module.exports = { initDatabase, getDb, getSettings, generateAvailableSlots, findEarliest, barberHours, timeToMinutes, minutesToTime };
