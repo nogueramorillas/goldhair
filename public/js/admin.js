@@ -397,7 +397,7 @@ function renderAgenda() {
   // Build time rows from 09:00 to 20:00 in 15-min blocks
   const startMin = 9 * 60;
   const endMin = 20 * 60;
-  const rowHeight = 20;
+  const rowHeight = 36;
 
   let html = '<div class="ag-cell ag-header"></div>';
   days.forEach((d, i) => {
