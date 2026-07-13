@@ -157,23 +157,26 @@
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre cliente</label>
-            <input type="text" id="nbName" placeholder="Nombre (opcional)" class="select-control">
+        <div class="form-group">
+          <label>Nombre cliente</label>
+          <input type="text" id="nbName" placeholder="Nombre" class="select-control">
+        </div>
+        <button type="button" class="nb-toggle-details" onclick="toggleNbDetails()" id="nbToggleDetailsBtn">+ Teléfono, email y notas (opcional)</button>
+        <div id="nbDetails" class="hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="tel" id="nbPhone" placeholder="Teléfono (opcional)" class="select-control">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="nbEmail" placeholder="Email (opcional, para confirmación)" class="select-control">
+            </div>
           </div>
           <div class="form-group">
-            <label>Teléfono</label>
-            <input type="tel" id="nbPhone" placeholder="Teléfono (opcional)" class="select-control">
+            <label>Notas</label>
+            <textarea id="nbNotes" placeholder="Notas internas..." class="select-control" rows="2"></textarea>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="nbEmail" placeholder="Email (opcional, para confirmación)" class="select-control">
-        </div>
-        <div class="form-group">
-          <label>Notas</label>
-          <textarea id="nbNotes" placeholder="Notas internas..." class="select-control" rows="2"></textarea>
         </div>
         <button class="btn-primary" onclick="submitLocalBooking()">Crear cita</button>
         <div id="nbResult" class="nb-result hidden"></div>
@@ -422,6 +425,20 @@
       <div class="form-group">
         <label>Hora de fin (vacío = horario del negocio)</label>
         <input type="time" id="barberCloseTime" class="select-control">
+      </div>
+    </div>
+    <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:16px">
+      <h3 style="font-size:14px;color:var(--gold);margin-bottom:10px">Acceso del trabajador (opcional)</h3>
+      <p style="font-size:12px;color:var(--grey);margin-bottom:12px">Con esto, este barbero podrá entrar en /staff para ver solo sus propias citas. No podrá editar nada ni ver al resto de barberos.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Usuario (vacío = sin acceso)</label>
+          <input type="text" id="barberUsername" placeholder="ej. marcos" class="select-control">
+        </div>
+        <div class="form-group">
+          <label>Nueva contraseña <span id="barberPassHint" style="color:var(--grey);font-weight:400"></span></label>
+          <input type="password" id="barberPassword" placeholder="••••••••" class="select-control">
+        </div>
       </div>
     </div>
     <div class="form-group" id="barberActiveGroup" style="display:none">

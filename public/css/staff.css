@@ -1,0 +1,113 @@
+body { background: var(--bg); }
+
+.staff-dashboard {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.staff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.staff-header-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.staff-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.staff-header-info h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  margin: 0 0 2px;
+}
+
+.staff-header-info p {
+  color: var(--grey);
+  font-size: 13px;
+  margin: 0;
+}
+
+.staff-range-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.staff-range-tab {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--grey);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.staff-range-tab:hover { border-color: var(--gold); color: var(--gold); }
+.staff-range-tab.active { background: var(--gold); border-color: var(--gold); color: #111; font-weight: 600; }
+
+.staff-day-group { margin-bottom: 28px; }
+
+.staff-day-title {
+  color: var(--gold);
+  font-size: 14px;
+  text-transform: capitalize;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-booking-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.staff-booking-time {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  min-width: 60px;
+  text-align: center;
+}
+
+.staff-booking-time span {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--grey);
+}
+
+.staff-booking-client { font-weight: 600; color: var(--white); }
+.staff-booking-service { font-size: 13px; color: var(--grey); margin-top: 2px; }
+
+.staff-empty {
+  text-align: center;
+  color: var(--grey);
+  padding: 40px 20px;
+}

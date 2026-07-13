@@ -45,6 +45,7 @@ async function start() {
   app.use('/api', createApiRouter(DATA_DIR, UPLOADS_DIR));
 
   app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+  app.get('/staff', (req, res) => res.sendFile(path.join(__dirname, 'public', 'staff.html')));
   app.get('/api/health', (req, res) => res.json({ ok: true }));
 
   app.listen(PORT, () => {

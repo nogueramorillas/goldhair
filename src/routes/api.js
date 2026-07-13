@@ -36,6 +36,11 @@ function createApiRouter(dataDir, uploadsDir) {
     res.status(401).json({ error: 'No autorizado' });
   }
 
+  function requireStaff(req, res, next) {
+    if (req.session && req.session.staffBarberId) return next();
+    res.status(401).json({ error: 'No autorizado' });
+  }
+
   function getOpenDaysList(settings) {
     return settings.open_days ? settings.open_days.split(',').map(Number) : [1,2,3,4,5,6];
   }
@@ -260,6 +265,47 @@ function createApiRouter(dataDir, uploadsDir) {
     res.json({ loggedIn: !!(req.session && req.session.adminLoggedIn) });
   });
 
+  // ==================== STAFF (per-barber, read-only) ====================
+  router.post('/staff/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
+    const db = getDb();
+    const barber = db.prepare('SELECT * FROM barbers WHERE username = ? AND active = 1').get(username);
+    if (!barber || !barber.password_hash) return res.status(401).json({ error: 'Credenciales incorrectas' });
+    const ok = await bcrypt.compare(password, barber.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Credenciales incorrectas' });
+    req.session.staffBarberId = barber.id;
+    res.json({ success: true });
+  });
+
+  router.post('/staff/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ success: true });
+  });
+
+  router.get('/staff/check', (req, res) => {
+    res.json({ loggedIn: !!(req.session && req.session.staffBarberId) });
+  });
+
+  router.get('/staff/me', requireStaff, (req, res) => {
+    const barber = getDb().prepare('SELECT id, name, color, photo_url FROM barbers WHERE id = ?').get(req.session.staffBarberId);
+    if (!barber) return res.status(404).json({ error: 'Barbero no encontrado' });
+    res.json(barber);
+  });
+
+  router.get('/staff/bookings', requireStaff, (req, res) => {
+    const db = getDb();
+    const { date_from, date_to } = req.query;
+    let q = `SELECT b.id, b.client_name, b.date, b.time_start, b.time_end, b.status, s.name as service_name
+             FROM bookings b JOIN services s ON s.id = b.service_id
+             WHERE b.barber_id = ? AND b.status != 'cancelled'`;
+    const params = [req.session.staffBarberId];
+    if (date_from) { q += ' AND b.date >= ?'; params.push(date_from); }
+    if (date_to) { q += ' AND b.date <= ?'; params.push(date_to); }
+    q += ' ORDER BY b.date, b.time_start';
+    res.json(db.prepare(q).all(...params));
+  });
+
   // Admin: settings
   router.get('/admin/settings', requireAdmin, (req, res) => {
     res.json(getSettings());
@@ -324,22 +370,57 @@ function createApiRouter(dataDir, uploadsDir) {
 
   // Admin: barbers
   router.get('/admin/barbers', requireAdmin, (req, res) => {
-    res.json(getDb().prepare('SELECT * FROM barbers ORDER BY id').all());
+    const barbers = getDb().prepare(
+      'SELECT id, name, color, photo_url, open_time, close_time, username, active, created_at FROM barbers ORDER BY id'
+    ).all();
+    res.json(barbers.map(b => ({ ...b, has_login: !!b.username })));
   });
 
-  router.post('/admin/barbers', requireAdmin, (req, res) => {
-    const { name, color, open_time, close_time } = req.body;
+  router.post('/admin/barbers', requireAdmin, async (req, res) => {
+    const { name, color, open_time, close_time, username, password } = req.body;
     if (!name) return res.status(400).json({ error: 'Nombre requerido' });
     const db = getDb();
-    const result = db.prepare('INSERT INTO barbers (name, color, open_time, close_time) VALUES (?, ?, ?, ?)')
-      .run(name, color || '#c8a96e', open_time || '', close_time || '');
+
+    let password_hash = '';
+    let finalUsername = null;
+    if (username && username.trim()) {
+      if (!password) return res.status(400).json({ error: 'Define una contraseña para el acceso de trabajador' });
+      const clash = db.prepare('SELECT id FROM barbers WHERE username = ?').get(username.trim());
+      if (clash) return res.status(409).json({ error: 'Ese usuario ya está en uso' });
+      finalUsername = username.trim();
+      password_hash = bcrypt.hashSync(password, 10);
+    }
+
+    const result = db.prepare(
+      'INSERT INTO barbers (name, color, open_time, close_time, username, password_hash) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(name, color || '#c8a96e', open_time || '', close_time || '', finalUsername, password_hash);
     res.json({ success: true, id: result.lastInsertRowid });
   });
 
-  router.put('/admin/barbers/:id', requireAdmin, (req, res) => {
-    const { name, color, active, open_time, close_time } = req.body;
-    getDb().prepare('UPDATE barbers SET name=?, color=?, active=?, open_time=?, close_time=? WHERE id=?')
-      .run(name, color || '#c8a96e', active ? 1 : 0, open_time || '', close_time || '', req.params.id);
+  router.put('/admin/barbers/:id', requireAdmin, async (req, res) => {
+    const { name, color, active, open_time, close_time, username, password } = req.body;
+    const db = getDb();
+    const existing = db.prepare('SELECT * FROM barbers WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Barbero no encontrado' });
+
+    let finalUsername = existing.username;
+    let password_hash = existing.password_hash;
+
+    if (!username || !username.trim()) {
+      // Clearing the username revokes staff access entirely
+      finalUsername = null;
+      password_hash = '';
+    } else {
+      const trimmed = username.trim();
+      const clash = db.prepare('SELECT id FROM barbers WHERE username = ? AND id != ?').get(trimmed, req.params.id);
+      if (clash) return res.status(409).json({ error: 'Ese usuario ya está en uso' });
+      finalUsername = trimmed;
+      if (password) password_hash = bcrypt.hashSync(password, 10);
+      else if (!existing.username) return res.status(400).json({ error: 'Define una contraseña para el acceso de trabajador' });
+    }
+
+    db.prepare('UPDATE barbers SET name=?, color=?, active=?, open_time=?, close_time=?, username=?, password_hash=? WHERE id=?')
+      .run(name, color || '#c8a96e', active ? 1 : 0, open_time || '', close_time || '', finalUsername, password_hash, req.params.id);
     res.json({ success: true });
   });
 

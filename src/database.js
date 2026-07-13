@@ -112,6 +112,8 @@ async function initDatabase(dataDir) {
       photo_url TEXT NOT NULL DEFAULT '',
       open_time TEXT NOT NULL DEFAULT '',
       close_time TEXT NOT NULL DEFAULT '',
+      username TEXT,
+      password_hash TEXT NOT NULL DEFAULT '',
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -192,10 +194,12 @@ async function initDatabase(dataDir) {
     );
   `);
 
-  // Migrations for barbers created before photo/schedule columns existed
+  // Migrations for barbers created before photo/schedule/login columns existed
   try { db._db.run("ALTER TABLE barbers ADD COLUMN photo_url TEXT NOT NULL DEFAULT ''"); } catch (_) {}
   try { db._db.run("ALTER TABLE barbers ADD COLUMN open_time TEXT NOT NULL DEFAULT ''"); } catch (_) {}
   try { db._db.run("ALTER TABLE barbers ADD COLUMN close_time TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db._db.run("ALTER TABLE barbers ADD COLUMN username TEXT"); } catch (_) {}
+  try { db._db.run("ALTER TABLE barbers ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''"); } catch (_) {}
 
   const defaultSettings = [
     ['shop_name', 'Gold Hair'],

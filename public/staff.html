@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Horario · Gold Hair</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/staff.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="staffLoginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">✂</div>
+    <h1>Mi Horario</h1>
+    <p>Gold Hair</p>
+    <form id="staffLoginForm" onsubmit="doStaffLogin(event)">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="staffLoginUser" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="staffLoginPass" placeholder="••••••••" required>
+      </div>
+      <div class="login-error hidden" id="staffLoginError"></div>
+      <button type="submit" class="btn-primary">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="staffDashboard" class="staff-dashboard hidden">
+  <header class="staff-header">
+    <div class="staff-header-info">
+      <div class="staff-avatar" id="staffAvatar"></div>
+      <div>
+        <h1 id="staffName">—</h1>
+        <p>Mi horario de citas</p>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="doStaffLogout()">Salir</button>
+  </header>
+
+  <div class="staff-range-tabs">
+    <button class="staff-range-tab active" data-range="today" onclick="setStaffRange('today', this)">Hoy</button>
+    <button class="staff-range-tab" data-range="week" onclick="setStaffRange('week', this)">Esta semana</button>
+    <button class="staff-range-tab" data-range="upcoming" onclick="setStaffRange('upcoming', this)">Próximos 15 días</button>
+  </div>
+
+  <div id="staffScheduleList" class="staff-schedule-list"></div>
+</div>
+
+<script src="/js/staff.js"></script>
+</body>
+</html>

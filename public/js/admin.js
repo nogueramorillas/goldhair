@@ -131,6 +131,7 @@ async function loadBarbersCards() {
       <h3>${b.name}</h3>
       <p class="barber-card-status">
         <span class="badge ${b.active ? 'badge-active' : 'badge-inactive'}">${b.active ? 'Activo' : 'Inactivo'}</span>
+        ${b.has_login ? '<span class="badge badge-active" style="margin-left:4px">🔑 Acceso staff</span>' : ''}
       </p>
       <div class="barber-card-actions">
         <button class="btn-sm btn-edit" onclick="openBarberModal(${b.id})">Editar</button>
@@ -152,6 +153,9 @@ function openBarberModal(id) {
   document.getElementById('barberPhotoPreview').classList.add('hidden');
   document.getElementById('barberPhotoPreview').src = '';
   document.getElementById('barberPhotoUploadBtn').textContent = '📷 Subir foto';
+  document.getElementById('barberUsername').value = '';
+  document.getElementById('barberPassword').value = '';
+  document.getElementById('barberPassHint').textContent = '';
   pendingBarberPhotoFile = null;
 
   if (id) {
@@ -166,6 +170,8 @@ function openBarberModal(id) {
       document.getElementById('barberActive').value = b.active;
       document.getElementById('barberActiveGroup').style.display = 'block';
       document.getElementById('barberModalTitle').textContent = 'Editar barbero';
+      document.getElementById('barberUsername').value = b.username || '';
+      document.getElementById('barberPassHint').textContent = b.has_login ? '(dejar vacío para no cambiar)' : '';
       if (b.photo_url) {
         document.getElementById('barberPhotoPreview').src = b.photo_url;
         document.getElementById('barberPhotoPreview').classList.remove('hidden');
@@ -199,11 +205,15 @@ async function saveBarber() {
   const active = document.getElementById('barberActive').value;
   const open_time = document.getElementById('barberOpenTime').value;
   const close_time = document.getElementById('barberCloseTime').value;
+  const username = document.getElementById('barberUsername').value.trim();
+  const password = document.getElementById('barberPassword').value;
   if (!name) return showToast('El nombre es obligatorio', 'error');
 
   const url = id ? `/api/admin/barbers/${id}` : '/api/admin/barbers';
   const method = id ? 'PUT' : 'POST';
-  const body = id ? { name, color, active: Number(active), open_time, close_time } : { name, color, open_time, close_time };
+  const body = id
+    ? { name, color, active: Number(active), open_time, close_time, username, password }
+    : { name, color, open_time, close_time, username, password };
 
   const res = await adminFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!res) return;
@@ -630,6 +640,13 @@ async function loadNbAvailability() {
 
   timeSelect.innerHTML = '<option value="">Selecciona hora</option>' +
     data.available.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function toggleNbDetails() {
+  const details = document.getElementById('nbDetails');
+  const btn = document.getElementById('nbToggleDetailsBtn');
+  const showing = details.classList.toggle('hidden');
+  btn.textContent = showing ? '+ Teléfono, email y notas (opcional)' : '– Ocultar teléfono, email y notas';
 }
 
 async function submitLocalBooking() {
