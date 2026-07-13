@@ -136,9 +136,96 @@ function prevStep() {
   if (state.step > 1) goToStep(state.step - 1);
 }
 
-function nextStep() {
+async function nextStep() {
   if (!validateCurrentStep()) return;
+  if (state.step === 5) {
+    await proceedFromDatos();
+    return;
+  }
   goToStep(state.step + 1);
+}
+
+// After "Datos", check whether the phone needs SMS verification before
+// letting the client reach the confirm step. If SMS isn't configured yet
+// (or this phone was already verified before), skip straight to Confirmar.
+async function proceedFromDatos() {
+  const phone = document.getElementById('clientPhone').value.trim();
+  const btnNext = document.getElementById('btnNext');
+  btnNext.disabled = true;
+  try {
+    const res = await fetch('/api/phone/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'No se pudo continuar, inténtalo de nuevo');
+      return;
+    }
+    if (data.already_verified || !data.sms_configured) {
+      goToStep(7);
+    } else {
+      goToStep(6);
+    }
+  } catch (e) {
+    alert('Error de conexión, inténtalo de nuevo');
+  } finally {
+    btnNext.disabled = false;
+  }
+}
+
+async function submitVerifyCode() {
+  const phone = document.getElementById('clientPhone').value.trim();
+  const code = document.getElementById('verifyCodeInput').value.trim();
+  const errEl = document.getElementById('verifyError');
+  errEl.classList.add('hidden');
+
+  if (!code) {
+    errEl.textContent = 'Introduce el código';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = document.querySelector('#step6 .btn-verify');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/phone/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code })
+    });
+    const data = await res.json();
+    if (data.verified) {
+      goToStep(7);
+    } else {
+      errEl.textContent = data.error || 'Código incorrecto';
+      errEl.classList.remove('hidden');
+    }
+  } catch (e) {
+    errEl.textContent = 'Error de conexión, inténtalo de nuevo';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function resendVerifyCode() {
+  const phone = document.getElementById('clientPhone').value.trim();
+  const errEl = document.getElementById('verifyError');
+  errEl.classList.add('hidden');
+  try {
+    await fetch('/api/phone/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    errEl.textContent = 'Código reenviado';
+    errEl.classList.remove('hidden');
+  } catch (e) {
+    errEl.textContent = 'No se pudo reenviar, inténtalo de nuevo';
+    errEl.classList.remove('hidden');
+  }
 }
 
 function validateCurrentStep() {
@@ -166,7 +253,7 @@ async function goToStep(n) {
   });
 
   // Hide all steps
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 7; i++) {
     document.getElementById(`step${i}`).classList.add('hidden');
   }
   document.getElementById(`step${n}`).classList.remove('hidden');
@@ -180,7 +267,7 @@ async function goToStep(n) {
 
   btnBack.style.visibility = n === 1 ? 'hidden' : 'visible';
 
-  if (n === 6) {
+  if (n === 7) {
     btnNext.classList.add('hidden');
     btnConfirm.classList.remove('hidden');
     btnConfirm.disabled = !document.getElementById('termsCheck').checked;
@@ -190,7 +277,7 @@ async function goToStep(n) {
     btnConfirm.classList.add('hidden');
     btnNext.disabled = false;
   } else {
-    // Servicio/Barbero/Fecha/Hora: picking an option advances automatically
+    // Servicio/Barbero/Fecha/Hora/Verificar: no shared nav button (auto-advance or own button)
     btnNext.classList.add('hidden');
     btnConfirm.classList.add('hidden');
   }
@@ -200,7 +287,12 @@ async function goToStep(n) {
   if (n === 2) renderBarbersList();
   if (n === 3) renderCalendar();
   if (n === 4) await renderTimeSlots();
-  if (n === 6) renderSummary();
+  if (n === 6) {
+    document.getElementById('verifyPhoneDisplay').textContent = document.getElementById('clientPhone').value.trim();
+    document.getElementById('verifyCodeInput').value = '';
+    document.getElementById('verifyError').classList.add('hidden');
+  }
+  if (n === 7) renderSummary();
 }
 
 function renderBookingServices() {

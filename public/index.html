@@ -110,9 +110,11 @@
       <div class="step-dot" data-step="5">5</div>
       <div class="step-line"></div>
       <div class="step-dot" data-step="6">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="7">7</div>
     </div>
     <div class="steps-labels">
-      <span>Servicio</span><span>Barbero</span><span>Fecha</span><span>Hora</span><span>Datos</span><span>Confirmar</span>
+      <span>Servicio</span><span>Barbero</span><span>Fecha</span><span>Hora</span><span>Datos</span><span>Verificar</span><span>Confirmar</span>
     </div>
 
     <!-- Step 1: Service -->
@@ -164,8 +166,23 @@
       </form>
     </div>
 
-    <!-- Step 6: Confirm -->
+    <!-- Step 6: Verify phone -->
     <div class="step-content hidden" id="step6">
+      <h2>Verifica tu teléfono</h2>
+      <div class="verify-info">
+        <div class="verify-icon">📱</div>
+        <p>Te hemos enviado un código por SMS al</p>
+        <p id="verifyPhoneDisplay" style="color:var(--gold);font-weight:600"></p>
+        <p class="verify-sub">Introduce el código de 6 dígitos</p>
+      </div>
+      <div class="verify-error hidden" id="verifyError"></div>
+      <input type="text" id="verifyCodeInput" maxlength="6" inputmode="numeric" placeholder="000000">
+      <button class="btn-verify" onclick="submitVerifyCode()">Verificar código</button>
+      <p class="resend-note">¿No te ha llegado? <a href="#" onclick="resendVerifyCode(); return false;">Reenviar código</a></p>
+    </div>
+
+    <!-- Step 7: Confirm -->
+    <div class="step-content hidden" id="step7">
       <h2>Confirmar reserva</h2>
       <div class="booking-summary" id="bookingSummary"></div>
       <div class="terms-box">

@@ -174,6 +174,19 @@ async function initDatabase(dataDir) {
       reason TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS phone_verifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT NOT NULL,
+      code TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      verified INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS verified_phones (
+      phone TEXT PRIMARY KEY,
+      verified_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   const defaultSettings = [
@@ -222,6 +235,7 @@ async function initDatabase(dataDir) {
 
   // Limpiar verificaciones antiguas no usadas (más de 15 minutos)
   db._db.run("DELETE FROM email_verifications WHERE verified = 0 AND created_at < datetime('now','-15 minutes')");
+  db._db.run("DELETE FROM phone_verifications WHERE verified = 0 AND created_at < datetime('now','-15 minutes')");
   db._save();
   return db;
 }

@@ -5,6 +5,11 @@ const path = require('path');
 const fs = require('fs');
 const { getDb, getSettings, generateAvailableSlots, findEarliest, timeToMinutes, minutesToTime } = require('../database');
 const { sendBookingConfirmation } = require('../email');
+const { sendVerificationSMS, isConfigured: smsConfigured } = require('../sms');
+
+function normalizePhone(p) {
+  return (p || '').replace(/\s+/g, '').trim();
+}
 
 function createApiRouter(dataDir, uploadsDir) {
   const router = express.Router();
@@ -93,9 +98,61 @@ function createApiRouter(dataDir, uploadsDir) {
     res.json({ available });
   });
 
+  // ==================== PHONE VERIFICATION (SMS) ====================
+  // Sending is a no-op until Twilio env vars are set (see src/sms.js), so the
+  // booking flow keeps working exactly as before until then.
+  router.post('/phone/send-code', async (req, res) => {
+    const phone = normalizePhone(req.body.phone);
+    if (!phone) return res.status(400).json({ error: 'Teléfono requerido' });
+
+    const db = getDb();
+    const already = db.prepare('SELECT phone FROM verified_phones WHERE phone = ?').get(phone);
+    if (already) return res.json({ already_verified: true, sms_configured: smsConfigured() });
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    db.prepare('INSERT INTO phone_verifications (phone, code, expires_at) VALUES (?, ?, ?)').run(phone, code, expires_at);
+
+    try {
+      await sendVerificationSMS(phone, code, getSettings());
+    } catch (e) {
+      console.error('[sms error]', e.message);
+      return res.status(500).json({ error: 'No se pudo enviar el SMS. Inténtalo de nuevo.' });
+    }
+    res.json({ sent: true, sms_configured: smsConfigured() });
+  });
+
+  router.post('/phone/verify-code', (req, res) => {
+    const phone = normalizePhone(req.body.phone);
+    const code = (req.body.code || '').trim();
+    if (!phone || !code) return res.status(400).json({ error: 'Faltan datos' });
+
+    const db = getDb();
+    const record = db.prepare(
+      'SELECT * FROM phone_verifications WHERE phone = ? AND verified = 0 ORDER BY id DESC LIMIT 1'
+    ).get(phone);
+
+    if (!record) return res.status(400).json({ error: 'Solicita un código nuevo' });
+    if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos. Solicita un código nuevo.' });
+    if (new Date(record.expires_at) < new Date()) return res.status(400).json({ error: 'El código ha caducado. Solicita uno nuevo.' });
+
+    if (record.code !== code) {
+      db.prepare('UPDATE phone_verifications SET attempts = attempts + 1 WHERE id = ?').run(record.id);
+      return res.status(400).json({ error: 'Código incorrecto' });
+    }
+
+    db.prepare('UPDATE phone_verifications SET verified = 1 WHERE id = ?').run(record.id);
+    db.prepare(
+      "INSERT INTO verified_phones (phone) VALUES (?) ON CONFLICT(phone) DO UPDATE SET verified_at = datetime('now')"
+    ).run(phone);
+
+    res.json({ verified: true });
+  });
+
   router.post('/bookings', async (req, res) => {
-    const { barber_id, service_id, client_name, client_phone, date, time_start, terms_accepted } = req.body;
+    const { barber_id, service_id, client_name, date, time_start, terms_accepted } = req.body;
     const client_email = (req.body.client_email || '').trim();
+    const client_phone = normalizePhone(req.body.client_phone);
 
     if (!barber_id || !service_id || !client_name || !client_phone || !date || !time_start) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -104,6 +161,11 @@ function createApiRouter(dataDir, uploadsDir) {
 
     const db = getDb();
     const settings = getSettings();
+
+    if (smsConfigured()) {
+      const phoneVerified = db.prepare('SELECT phone FROM verified_phones WHERE phone = ?').get(client_phone);
+      if (!phoneVerified) return res.status(403).json({ error: 'Verifica tu teléfono antes de reservar' });
+    }
 
     // Check blacklist by phone or email
     const blocked = db.prepare(
