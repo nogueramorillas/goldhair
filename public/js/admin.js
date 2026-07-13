@@ -696,6 +696,7 @@ async function openBookingDetail(id) {
   document.getElementById('bookingDetailActions').innerHTML = `
     ${b.status === 'confirmed' ? `
       <button class="btn-sm btn-edit" onclick="showEditBookingForm(${b.id})">✎ Editar / Mover</button>
+      ${b.client_phone ? `<button class="btn-sm btn-edit" onclick="sendWhatsappReminder(${b.id})">💬 Recordatorio WhatsApp</button>` : ''}
       <button class="btn-sm btn-edit" onclick="updateBookingStatus(${b.id},'completed')">Marcar completada</button>
       <button class="btn-sm btn-delete" onclick="updateBookingStatus(${b.id},'cancelled')">Cancelar cita</button>
       <button class="btn-sm" style="background:#7a0010;color:#fff;border:none" onclick="markNoShow(${b.id}, false)">No presentado</button>
@@ -705,6 +706,17 @@ async function openBookingDetail(id) {
   `;
 
   document.getElementById('bookingDetailModal').classList.remove('hidden');
+}
+
+async function sendWhatsappReminder(id) {
+  const res = await adminFetch(`/api/admin/bookings/${id}/send-whatsapp-reminder`, { method: 'POST' });
+  if (!res) return;
+  const data = await res.json();
+  if (data.success) {
+    showToast('Recordatorio enviado por WhatsApp', 'success');
+  } else {
+    showToast(data.error || 'No se pudo enviar', 'error');
+  }
 }
 
 function showEditBookingForm(id) {

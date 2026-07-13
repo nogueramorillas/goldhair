@@ -6,6 +6,7 @@ const fs = require('fs');
 const { getDb, getSettings, generateAvailableSlots, findEarliest, barberHours, timeToMinutes, minutesToTime } = require('../database');
 const { sendBookingConfirmation, sendAdminNotification } = require('../email');
 const { sendVerificationSMS, isConfigured: smsConfigured } = require('../sms');
+const { sendBookingReminder, isConfigured: whatsappConfigured } = require('../whatsapp');
 
 function normalizePhone(p) {
   return (p || '').replace(/\s+/g, '').trim();
@@ -449,6 +450,28 @@ function createApiRouter(dataDir, uploadsDir) {
       .run(barber_id, date, time_start, time_end, bookingId);
 
     res.json({ success: true, booking_id: bookingId, date, time_start, time_end, barber_id });
+  });
+
+  router.post('/admin/bookings/:id/send-whatsapp-reminder', requireAdmin, async (req, res) => {
+    if (!whatsappConfigured()) {
+      return res.status(400).json({ error: 'WhatsApp no configurado todavía (faltan credenciales de Twilio)' });
+    }
+    const db = getDb();
+    const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
+    if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
+    if (!booking.client_phone) return res.status(400).json({ error: 'Esta cita no tiene teléfono' });
+
+    const service = db.prepare('SELECT * FROM services WHERE id = ?').get(booking.service_id);
+    const barber = db.prepare('SELECT * FROM barbers WHERE id = ?').get(booking.barber_id);
+    const settings = getSettings();
+
+    try {
+      await sendBookingReminder(booking, service, barber, settings);
+      res.json({ success: true });
+    } catch (e) {
+      console.error('[whatsapp error]', e.message);
+      res.status(500).json({ error: 'No se pudo enviar el recordatorio por WhatsApp' });
+    }
   });
 
   // Admin: blocked days
