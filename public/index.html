@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gold Hair - Reservas Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Barber poles – fixed, always visible -->
+<div class="barber-pole"></div>
+<div class="barber-pole right"></div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-content">
+    <div class="scissors-icon">✂</div>
+    <h1 class="shop-name" id="shopName">Barbería</h1>
+    <p class="shop-tagline" id="shopTagline">El arte del buen corte</p>
+    <button class="btn-reserve" onclick="openBooking()">RESERVAR CITA</button>
+    <p class="payment-note">💳 Pago en local · Efectivo o tarjeta</p>
+  </div>
+</header>
+
+<!-- SERVICES -->
+<section class="services-section" id="services">
+  <div class="section-header">
+    <h2>Nuestros Servicios</h2>
+    <div class="divider"><span></span><span class="diamond">◆</span><span></span></div>
+  </div>
+  <div class="services-grid" id="servicesGrid">
+    <div class="service-skeleton"></div>
+    <div class="service-skeleton"></div>
+    <div class="service-skeleton"></div>
+    <div class="service-skeleton"></div>
+  </div>
+</section>
+
+<!-- INFO -->
+<section class="info-section">
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="info-icon">⏰</div>
+      <h3>Citas rápidas</h3>
+      <p>Reserva en 60 segundos, sin llamadas</p>
+    </div>
+    <div class="info-card">
+      <div class="info-icon">💳</div>
+      <h3>Pago en local</h3>
+      <p>Efectivo o tarjeta, siempre en persona</p>
+    </div>
+    <div class="info-card">
+      <div class="info-icon">📧</div>
+      <h3>Confirmación</h3>
+      <p>Recibes confirmación por email</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL + MAPS -->
+<section class="social-section hidden" id="socialSection">
+  <div class="social-container">
+    <a class="ig-card hidden" id="igCard" href="#" target="_blank" rel="noopener noreferrer">
+      <div class="ig-glow"></div>
+      <svg class="ig-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+      </svg>
+      <div class="ig-text">
+        <span class="ig-label">Síguenos en</span>
+        <span class="ig-handle" id="igHandle">Instagram</span>
+      </div>
+    </a>
+    <div class="maps-card hidden" id="mapsCard">
+      <iframe id="mapsFrame" frameborder="0" style="border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p id="footerShopName">Barbería</p>
+  <p id="footerAddress"></p>
+  <p id="footerPhone"></p>
+  <div class="footer-links">
+    <a href="#" onclick="showLegal(); return false;">Aviso Legal y Privacidad</a>
+    <span class="sep">·</span>
+    <a href="/admin">Panel Admin</a>
+  </div>
+  <p class="footer-copy">© <span id="year"></span> Todos los derechos reservados</p>
+</footer>
+
+<!-- ========== BOOKING MODAL ========== -->
+<div class="modal-overlay hidden" id="bookingModal" onclick="closeBookingOnOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeBooking()">✕</button>
+
+    <!-- Progress -->
+    <div class="steps-progress">
+      <div class="step-dot active" data-step="1">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="2">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="3">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="4">4</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="5">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="6">6</div>
+    </div>
+    <div class="steps-labels">
+      <span>Servicio</span><span>Barbero</span><span>Fecha</span><span>Hora</span><span>Datos</span><span>Confirmar</span>
+    </div>
+
+    <!-- Step 1: Service -->
+    <div class="step-content" id="step1">
+      <h2>Elige tu servicio</h2>
+      <div class="booking-services" id="bookingServices"></div>
+    </div>
+
+    <!-- Step 2: Barber -->
+    <div class="step-content hidden" id="step2">
+      <h2>Elige tu barbero</h2>
+      <div class="barbers-list" id="barbersList"></div>
+    </div>
+
+    <!-- Step 3: Date -->
+    <div class="step-content hidden" id="step3">
+      <h2>Elige la fecha</h2>
+      <div class="calendar-nav">
+        <button onclick="changeMonth(-1)">‹</button>
+        <span id="calendarTitle"></span>
+        <button onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- Step 4: Time -->
+    <div class="step-content hidden" id="step4">
+      <h2>Elige la hora</h2>
+      <p class="step-subtitle" id="dateDisplay"></p>
+      <div class="time-slots" id="timeSlots"></div>
+    </div>
+
+    <!-- Step 5: Details -->
+    <div class="step-content hidden" id="step5">
+      <h2>Tus datos</h2>
+      <form class="booking-form" id="bookingForm" onsubmit="return false;">
+        <div class="form-group">
+          <label>Nombre completo *</label>
+          <input type="text" id="clientName" placeholder="Juan García" required>
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico *</label>
+          <input type="email" id="clientEmail" placeholder="juan@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Teléfono *</label>
+          <input type="tel" id="clientPhone" placeholder="+34 600 000 000" required>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 6: Confirm -->
+    <div class="step-content hidden" id="step6">
+      <h2>Confirmar reserva</h2>
+      <div class="booking-summary" id="bookingSummary"></div>
+      <div class="terms-box">
+        <label class="checkbox-label">
+          <input type="checkbox" id="termsCheck" onchange="updateConfirmBtn()">
+          <span>He leído y acepto la <a href="#" onclick="showLegal(); return false;">política de privacidad</a> y el tratamiento de mis datos para la gestión de la cita.</span>
+        </label>
+      </div>
+      <div class="confirm-error hidden" id="confirmError"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="modal-nav">
+      <button class="btn-back" id="btnBack" onclick="prevStep()" style="visibility:hidden">← Atrás</button>
+      <button class="btn-next" id="btnNext" onclick="nextStep()">Siguiente →</button>
+      <button class="btn-confirm hidden" id="btnConfirm" onclick="submitBooking()">Confirmar reserva</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay hidden" id="successModal">
+  <div class="modal modal-small">
+    <div class="success-content">
+      <div class="success-icon">✂</div>
+      <h2>¡Reserva confirmada!</h2>
+      <p id="successDetails"></p>
+      <p class="success-email">Te hemos enviado un email de confirmación.</p>
+      <p class="payment-reminder">Recuerda: pago en local (efectivo o tarjeta)</p>
+      <button class="btn-reserve" onclick="closeSuccess()">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL MODAL -->
+<div class="modal-overlay hidden" id="legalModal" onclick="closeLegalOnOverlay(event)">
+  <div class="modal modal-legal">
+    <button class="modal-close" onclick="closeLegal()">✕</button>
+    <h2>Aviso Legal y Política de Privacidad</h2>
+    <div class="legal-content" id="legalContent"></div>
+    <button class="btn-reserve" onclick="closeLegal()">Cerrar</button>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

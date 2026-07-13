@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin · Gold Hair</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">✂</div>
+    <h1>Panel Admin</h1>
+    <p>Gold Hair</p>
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="loginUser" value="admin" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="••••••••" required>
+      </div>
+      <div class="login-error hidden" id="loginError"></div>
+      <button type="submit" class="btn-primary">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="dashboard hidden">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">✂</span>
+      <span class="logo-text">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('agenda', this)">
+        <span class="nav-icon">📅</span><span>Agenda</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('services', this)">
+        <span class="nav-icon">✂</span><span>Servicios</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('barbers', this)">
+        <span class="nav-icon">👤</span><span>Barberos</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('new-booking', this)">
+        <span class="nav-icon">➕</span><span>Nueva cita</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('blocked', this)">
+        <span class="nav-icon">🚫</span><span>Bloqueos</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('settings', this)">
+        <span class="nav-icon">⚙️</span><span>Ajustes</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="/" class="nav-item">
+        <span class="nav-icon">🏠</span><span>Ver web</span>
+      </a>
+      <a href="#" class="nav-item" onclick="doLogout()">
+        <span class="nav-icon">↩</span><span>Salir</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- Mobile header -->
+    <div class="mobile-header">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <span class="mobile-title" id="mobileTitle">Agenda</span>
+    </div>
+
+    <!-- ===== AGENDA ===== -->
+    <section id="section-agenda" class="section active">
+      <div class="section-header">
+        <h2>Agenda</h2>
+        <div class="agenda-controls">
+          <select id="agendaBarberId" onchange="loadAgenda()" class="select-control">
+            <option value="">Todos los barberos</option>
+          </select>
+          <div class="week-nav">
+            <button onclick="changeWeek(-1)">‹</button>
+            <span id="weekLabel"></span>
+            <button onclick="changeWeek(1)">›</button>
+          </div>
+          <button class="btn-today" onclick="goToToday()">Hoy</button>
+        </div>
+      </div>
+      <div class="agenda-wrap">
+        <div class="agenda-calendar" id="agendaCalendar"></div>
+      </div>
+    </section>
+
+    <!-- ===== SERVICES ===== -->
+    <section id="section-services" class="section hidden">
+      <div class="section-header">
+        <h2>Servicios</h2>
+        <button class="btn-primary" onclick="openServiceModal()">+ Añadir servicio</button>
+      </div>
+      <div class="services-table-wrap">
+        <table class="admin-table" id="servicesTable">
+          <thead>
+            <tr><th>Foto</th><th>Nombre</th><th>Descripción</th><th>Precio</th><th>Duración</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="servicesTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== BARBERS ===== -->
+    <section id="section-barbers" class="section hidden">
+      <div class="section-header">
+        <h2>Barberos</h2>
+        <button class="btn-primary" onclick="openBarberModal()">+ Añadir barbero</button>
+      </div>
+      <div class="barbers-cards" id="barbersCards"></div>
+    </section>
+
+    <!-- ===== NEW BOOKING ===== -->
+    <section id="section-new-booking" class="section hidden">
+      <div class="section-header">
+        <h2>Nueva cita (desde local)</h2>
+      </div>
+      <div class="local-booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Barbero *</label>
+            <select id="nbBarber" onchange="loadNbAvailability()" class="select-control">
+              <option value="">Selecciona barbero</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Servicio *</label>
+            <select id="nbService" onchange="loadNbAvailability()" class="select-control">
+              <option value="">Selecciona servicio</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha *</label>
+            <input type="date" id="nbDate" onchange="loadNbAvailability()" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Hora *</label>
+            <select id="nbTime" class="select-control">
+              <option value="">Selecciona fecha y servicio primero</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre cliente</label>
+            <input type="text" id="nbName" placeholder="Nombre (opcional)" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="nbPhone" placeholder="Teléfono (opcional)" class="select-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="nbEmail" placeholder="Email (opcional, para confirmación)" class="select-control">
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="nbNotes" placeholder="Notas internas..." class="select-control" rows="2"></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitLocalBooking()">Crear cita</button>
+        <div id="nbResult" class="nb-result hidden"></div>
+      </div>
+    </section>
+
+    <!-- ===== BLOCKED ===== -->
+    <section id="section-blocked" class="section hidden">
+      <div class="section-header">
+        <h2>Bloqueos de horario</h2>
+      </div>
+      <div class="blocked-wrap">
+        <div class="blocked-col">
+          <h3>Bloquear día completo</h3>
+          <div class="form-group">
+            <label>Barbero</label>
+            <select id="bdBarber" class="select-control"></select>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="bdDate" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="bdReason" placeholder="Vacaciones, festivo..." class="select-control">
+          </div>
+          <button class="btn-primary" onclick="blockDay()">Bloquear día</button>
+          <h4 style="margin-top:24px">Días bloqueados</h4>
+          <div id="blockedDaysList" class="blocked-list"></div>
+        </div>
+        <div class="blocked-col">
+          <h3>Bloquear horas específicas</h3>
+          <div class="form-group">
+            <label>Barbero</label>
+            <select id="bsBarber" class="select-control"></select>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="bsDate" class="select-control">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Desde</label>
+              <select id="bsStart" class="select-control"></select>
+            </div>
+            <div class="form-group">
+              <label>Hasta</label>
+              <select id="bsEnd" class="select-control"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="bsReason" placeholder="Descanso, reunión..." class="select-control">
+          </div>
+          <button class="btn-primary" onclick="blockSlot()">Bloquear horas</button>
+          <h4 style="margin-top:24px">Horas bloqueadas</h4>
+          <div id="blockedSlotsList" class="blocked-list"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px">
+        <h3 style="color:var(--red);margin-bottom:16px">🚫 Contactos bloqueados</h3>
+        <p style="font-size:13px;color:var(--grey);margin-bottom:16px">Clientes bloqueados por no presentarse o reservas falsas. No podrán hacer nuevas reservas online.</p>
+        <div id="blacklistContainer" class="blocked-list"></div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section id="section-settings" class="section hidden">
+      <div class="section-header">
+        <h2>Ajustes</h2>
+      </div>
+      <div class="settings-form">
+        <h3>Información del negocio</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre de la barbería</label>
+            <input type="text" id="setName" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Lema / Tagline</label>
+            <input type="text" id="setTagline" class="select-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" id="setAddress" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="setPhone" class="select-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email del negocio</label>
+          <input type="email" id="setEmail" class="select-control">
+        </div>
+
+        <h3>Redes sociales y ubicación</h3>
+        <div class="form-group">
+          <label>Instagram URL</label>
+          <input type="url" id="setInstagram" class="select-control" placeholder="https://www.instagram.com/tu_barberia">
+        </div>
+        <div class="form-group">
+          <label>Google Maps – URL del iframe (opcional, si está vacío usa la dirección)</label>
+          <input type="url" id="setMapsUrl" class="select-control" placeholder="https://www.google.com/maps/embed?pb=...">
+          <small style="color:#888;font-size:12px">En Google Maps: Compartir → Insertar un mapa → copia la URL del src del iframe</small>
+        </div>
+
+        <h3>Horario</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hora apertura</label>
+            <input type="time" id="setOpenTime" class="select-control" step="900">
+          </div>
+          <div class="form-group">
+            <label>Hora cierre</label>
+            <input type="time" id="setCloseTime" class="select-control" step="900">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Días abiertos</label>
+          <div class="days-checkboxes" id="daysCheckboxes"></div>
+        </div>
+
+        <h3>Seguridad</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nueva contraseña (dejar vacío para no cambiar)</label>
+            <input type="password" id="setNewPass" placeholder="••••••••" class="select-control">
+          </div>
+          <div class="form-group">
+            <label>Repetir contraseña</label>
+            <input type="password" id="setNewPass2" placeholder="••••••••" class="select-control">
+          </div>
+        </div>
+
+        <h3>Aviso legal / Privacidad</h3>
+        <div class="form-group">
+          <label>Texto del aviso legal (usa {shop_name}, {shop_address}, {shop_email})</label>
+          <textarea id="setLegal" class="select-control" rows="8"></textarea>
+        </div>
+
+        <button class="btn-primary" onclick="saveSettings()">Guardar cambios</button>
+        <div id="settingsResult" class="nb-result hidden"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== SERVICE MODAL ===== -->
+<div class="modal-overlay hidden" id="serviceModal" onclick="closeServiceModalOnOverlay(event)">
+  <div class="modal admin-modal">
+    <button class="modal-close" onclick="closeServiceModal()">✕</button>
+    <h2 id="serviceModalTitle">Nuevo servicio</h2>
+    <input type="hidden" id="serviceId">
+    <div class="form-group">
+      <label>Nombre del servicio *</label>
+      <input type="text" id="svcName" placeholder="Corte de pelo" class="select-control">
+    </div>
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea id="svcDesc" placeholder="Descripción del servicio..." class="select-control" rows="2"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio (€) *</label>
+        <input type="number" id="svcPrice" placeholder="15" step="0.5" min="0" class="select-control">
+      </div>
+      <div class="form-group">
+        <label>Duración (minutos) *</label>
+        <select id="svcDuration" class="select-control">
+          <option value="15">15 min</option>
+          <option value="30" selected>30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">60 min</option>
+          <option value="75">75 min</option>
+          <option value="90">90 min</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Orden de visualización</label>
+        <input type="number" id="svcOrder" placeholder="1" min="0" class="select-control">
+      </div>
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="svcActive" class="select-control">
+          <option value="1">Activo</option>
+          <option value="0">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Foto del servicio</label>
+      <div class="photo-upload" id="photoUploadArea">
+        <img id="svcPhotoPreview" class="photo-preview hidden" src="" alt="preview">
+        <div id="photoUploadBtn" class="photo-upload-btn" onclick="document.getElementById('svcPhotoInput').click()">
+          <span>📷 Subir foto</span>
+        </div>
+        <input type="file" id="svcPhotoInput" accept="image/*" onchange="previewPhoto(this)" style="display:none">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeServiceModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveService()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BARBER MODAL ===== -->
+<div class="modal-overlay hidden" id="barberModal" onclick="closeBarberModalOnOverlay(event)">
+  <div class="modal admin-modal">
+    <button class="modal-close" onclick="closeBarberModal()">✕</button>
+    <h2 id="barberModalTitle">Nuevo barbero</h2>
+    <input type="hidden" id="barberId">
+    <div class="form-group">
+      <label>Nombre *</label>
+      <input type="text" id="barberName" placeholder="Nombre del barbero" class="select-control">
+    </div>
+    <div class="form-group">
+      <label>Color de agenda</label>
+      <div class="color-picker">
+        <input type="color" id="barberColor" value="#c8a96e">
+        <span id="barberColorHex">#c8a96e</span>
+      </div>
+    </div>
+    <div class="form-group" id="barberActiveGroup" style="display:none">
+      <label>Estado</label>
+      <select id="barberActive" class="select-control">
+        <option value="1">Activo</option>
+        <option value="0">Inactivo</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeBarberModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveBarber()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOOKING DETAIL MODAL ===== -->
+<div class="modal-overlay hidden" id="bookingDetailModal" onclick="closeBookingDetailOnOverlay(event)">
+  <div class="modal admin-modal">
+    <button class="modal-close" onclick="closeBookingDetail()">✕</button>
+    <h2>Detalle de cita</h2>
+    <div id="bookingDetailContent"></div>
+    <div class="modal-actions" id="bookingDetailActions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
