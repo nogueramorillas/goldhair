@@ -150,8 +150,8 @@ function validateCurrentStep() {
     const name = document.getElementById('clientName').value.trim();
     const email = document.getElementById('clientEmail').value.trim();
     const phone = document.getElementById('clientPhone').value.trim();
-    if (!name || !email || !phone) { alert('Por favor rellena todos los campos'); return false; }
-    if (!/\S+@\S+\.\S+/.test(email)) { alert('Email no válido'); return false; }
+    if (!name || !phone) { alert('Por favor rellena nombre y teléfono'); return false; }
+    if (email && !/\S+@\S+\.\S+/.test(email)) { alert('Email no válido'); return false; }
   }
   return true;
 }
@@ -184,10 +184,15 @@ async function goToStep(n) {
     btnNext.classList.add('hidden');
     btnConfirm.classList.remove('hidden');
     btnConfirm.disabled = !document.getElementById('termsCheck').checked;
-  } else {
+  } else if (n === 5) {
+    // Datos: needs an explicit "Siguiente" since it's a multi-field form, not a single tap
     btnNext.classList.remove('hidden');
     btnConfirm.classList.add('hidden');
     btnNext.disabled = false;
+  } else {
+    // Servicio/Barbero/Fecha/Hora: picking an option advances automatically
+    btnNext.classList.add('hidden');
+    btnConfirm.classList.add('hidden');
   }
 
   // Step-specific rendering
@@ -223,6 +228,7 @@ function selectService(id) {
   state.date = null;
   state.time = null;
   renderBookingServices();
+  nextStep();
 }
 
 async function renderBarbersList() {
@@ -274,6 +280,7 @@ function selectBarber(id, earliestDate, earliestTime) {
   }
   state.time = null;
   renderBarbersList();
+  nextStep();
 }
 
 function renderCalendar() {
@@ -319,6 +326,7 @@ function selectDate(dateStr) {
   state.date = dateStr;
   state.time = null;
   renderCalendar();
+  nextStep();
 }
 
 async function renderTimeSlots() {
@@ -353,6 +361,7 @@ function selectTime(t) {
   document.querySelectorAll('.time-slot').forEach(el => {
     el.classList.toggle('selected', el.textContent.trim() === t);
   });
+  nextStep();
 }
 
 

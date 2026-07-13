@@ -94,9 +94,10 @@ function createApiRouter(dataDir, uploadsDir) {
   });
 
   router.post('/bookings', async (req, res) => {
-    const { barber_id, service_id, client_name, client_email, client_phone, date, time_start, terms_accepted } = req.body;
+    const { barber_id, service_id, client_name, client_phone, date, time_start, terms_accepted } = req.body;
+    const client_email = (req.body.client_email || '').trim();
 
-    if (!barber_id || !service_id || !client_name || !client_email || !client_phone || !date || !time_start) {
+    if (!barber_id || !service_id || !client_name || !client_phone || !date || !time_start) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
     if (!terms_accepted) return res.status(400).json({ error: 'Debes aceptar los términos y condiciones' });
@@ -107,7 +108,7 @@ function createApiRouter(dataDir, uploadsDir) {
     // Check blacklist by phone or email
     const blocked = db.prepare(
       'SELECT id FROM blacklist WHERE phone = ? OR (email != "" AND email = ?)'
-    ).get(client_phone.trim(), client_email.trim());
+    ).get(client_phone.trim(), client_email);
     if (blocked) return res.status(403).json({ error: 'No es posible realizar reservas desde este contacto. Por favor, llama al local directamente.' });
 
     const service = db.prepare('SELECT * FROM services WHERE id = ? AND active = 1').get(service_id);
@@ -146,15 +147,17 @@ function createApiRouter(dataDir, uploadsDir) {
     const result = db.prepare(`
       INSERT INTO bookings (barber_id, service_id, client_name, client_email, client_phone, date, time_start, time_end)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(barber_id, service_id, client_name.trim(), client_email.trim(), client_phone.trim(), date, time_start, time_end);
+    `).run(barber_id, service_id, client_name.trim(), client_email, client_phone.trim(), date, time_start, time_end);
 
     const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(result.lastInsertRowid);
 
-    // Responder al cliente inmediatamente, enviar email en segundo plano
+    // Responder al cliente inmediatamente, enviar email en segundo plano (si dio uno)
     res.json({ success: true, booking_id: booking.id, time_end });
 
-    sendBookingConfirmation(booking, service, barber, settings)
-      .catch(e => console.error('[email error]', e.message));
+    if (client_email) {
+      sendBookingConfirmation(booking, service, barber, settings)
+        .catch(e => console.error('[email error]', e.message));
+    }
   });
 
   router.get('/legal', (req, res) => {
@@ -328,6 +331,43 @@ function createApiRouter(dataDir, uploadsDir) {
     if (!['confirmed','cancelled','completed'].includes(status)) return res.status(400).json({ error: 'Estado inválido' });
     getDb().prepare('UPDATE bookings SET status = ? WHERE id = ?').run(status, req.params.id);
     res.json({ success: true });
+  });
+
+  // Admin: move/edit a booking (drag-and-drop reschedule or manual edit)
+  router.put('/admin/bookings/:id/reschedule', requireAdmin, (req, res) => {
+    const db = getDb();
+    const bookingId = req.params.id;
+    const existing = db.prepare('SELECT * FROM bookings WHERE id = ?').get(bookingId);
+    if (!existing) return res.status(404).json({ error: 'Cita no encontrada' });
+
+    const barber_id = req.body.barber_id || existing.barber_id;
+    const date = req.body.date || existing.date;
+    const time_start = req.body.time_start || existing.time_start;
+
+    const service = db.prepare('SELECT * FROM services WHERE id = ?').get(existing.service_id);
+    if (!service) return res.status(404).json({ error: 'Servicio no encontrado' });
+    const barber = db.prepare('SELECT * FROM barbers WHERE id = ?').get(barber_id);
+    if (!barber) return res.status(404).json({ error: 'Barbero no encontrado' });
+
+    const time_end = minutesToTime(timeToMinutes(time_start) + service.duration_minutes);
+
+    const bookings = db.prepare(
+      'SELECT id, time_start, time_end FROM bookings WHERE barber_id = ? AND date = ? AND status != "cancelled" AND id != ?'
+    ).all(barber_id, date, bookingId);
+    const blocked = db.prepare('SELECT time_start, time_end FROM blocked_slots WHERE barber_id = ? AND date = ?').all(barber_id, date);
+
+    const newStart = timeToMinutes(time_start);
+    const newEnd = timeToMinutes(time_end);
+    const overlapsBooking = bookings.some(b => newStart < timeToMinutes(b.time_end) && newEnd > timeToMinutes(b.time_start));
+    const overlapsBlocked = blocked.some(b => newStart < timeToMinutes(b.time_end) && newEnd > timeToMinutes(b.time_start));
+    if (overlapsBooking || overlapsBlocked) {
+      return res.status(409).json({ error: 'Ese horario se solapa con otra cita o bloqueo' });
+    }
+
+    db.prepare('UPDATE bookings SET barber_id = ?, date = ?, time_start = ?, time_end = ? WHERE id = ?')
+      .run(barber_id, date, time_start, time_end, bookingId);
+
+    res.json({ success: true, booking_id: bookingId, date, time_start, time_end, barber_id });
   });
 
   // Admin: blocked days

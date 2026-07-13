@@ -434,17 +434,121 @@ function renderAgenda() {
         const dur = timeToMins(b.time_end) - timeToMins(b.time_start);
         const heightPx = (dur / 15) * rowHeight - 2;
         const color = b.barber_color || '#c8a96e';
-        cellContent += `<div class="ag-booking" style="background:${color};height:${heightPx}px;top:2px"
-          onclick="openBookingDetail(${b.id})" title="${b.client_name} · ${b.service_name}">
+        cellContent += `<div class="ag-booking" data-booking-id="${b.id}" style="background:${color};height:${heightPx}px;top:2px"
+          title="${b.client_name} · ${b.service_name} (arrastra para mover)">
           ${b.time_start} ${b.client_name} (${b.service_name})
         </div>`;
       });
 
-      html += `<div class="ag-cell ${cellClass}" style="position:relative;height:${rowHeight}px">${cellContent}</div>`;
+      html += `<div class="ag-cell ${cellClass}" data-date="${dateStr}" data-time="${timeStr}" style="position:relative;height:${rowHeight}px">${cellContent}</div>`;
     });
   }
 
   cal.innerHTML = html;
+  setupAgendaDrag();
+}
+
+// ===== AGENDA DRAG TO RESCHEDULE (mouse + touch, via Pointer Events) =====
+let agendaDragState = null;
+
+function setupAgendaDrag() {
+  const cal = document.getElementById('agendaCalendar');
+  if (!cal || cal.dataset.dragSetup) return;
+  cal.dataset.dragSetup = '1';
+
+  cal.addEventListener('pointerdown', (e) => {
+    const bookingEl = e.target.closest('.ag-booking');
+    if (!bookingEl) return;
+    const rect = bookingEl.getBoundingClientRect();
+    agendaDragState = {
+      id: Number(bookingEl.dataset.bookingId),
+      bookingEl,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      width: rect.width,
+      dragging: false,
+      targetCell: null,
+      pointerId: e.pointerId
+    };
+  });
+
+  cal.addEventListener('pointermove', (e) => {
+    if (!agendaDragState || agendaDragState.pointerId !== e.pointerId) return;
+    const dx = e.clientX - agendaDragState.startX;
+    const dy = e.clientY - agendaDragState.startY;
+
+    if (!agendaDragState.dragging) {
+      if (Math.hypot(dx, dy) < 6) return;
+      agendaDragState.dragging = true;
+      try { agendaDragState.bookingEl.setPointerCapture(agendaDragState.pointerId); } catch (_) {}
+      agendaDragState.bookingEl.classList.add('dragging');
+      agendaDragState.bookingEl.style.position = 'fixed';
+      agendaDragState.bookingEl.style.width = agendaDragState.width + 'px';
+      agendaDragState.bookingEl.style.pointerEvents = 'none';
+    }
+
+    e.preventDefault();
+    agendaDragState.bookingEl.style.left = (e.clientX - agendaDragState.offsetX) + 'px';
+    agendaDragState.bookingEl.style.top = (e.clientY - agendaDragState.offsetY) + 'px';
+
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = under ? under.closest('.ag-cell.ag-slot:not(.closed)') : null;
+    if (agendaDragState.targetCell && agendaDragState.targetCell !== cell) {
+      agendaDragState.targetCell.classList.remove('drop-target');
+    }
+    if (cell) cell.classList.add('drop-target');
+    agendaDragState.targetCell = cell;
+  }, { passive: false });
+
+  cal.addEventListener('pointerup', (e) => {
+    if (!agendaDragState || agendaDragState.pointerId !== e.pointerId) return;
+    const { id, bookingEl, dragging, targetCell } = agendaDragState;
+
+    if (dragging) {
+      bookingEl.classList.remove('dragging');
+      bookingEl.style.position = '';
+      bookingEl.style.left = '';
+      bookingEl.style.top = '';
+      bookingEl.style.width = '';
+      bookingEl.style.pointerEvents = '';
+      if (targetCell) {
+        targetCell.classList.remove('drop-target');
+        moveBooking(id, targetCell.dataset.date, targetCell.dataset.time);
+      } else {
+        renderAgenda();
+      }
+    } else {
+      openBookingDetail(id);
+    }
+    agendaDragState = null;
+  });
+
+  cal.addEventListener('pointercancel', () => {
+    if (agendaDragState) {
+      agendaDragState.bookingEl.classList.remove('dragging');
+      if (agendaDragState.targetCell) agendaDragState.targetCell.classList.remove('drop-target');
+    }
+    agendaDragState = null;
+    renderAgenda();
+  });
+}
+
+async function moveBooking(id, date, time_start) {
+  const res = await adminFetch(`/api/admin/bookings/${id}/reschedule`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date, time_start })
+  });
+  if (!res) { loadAgenda(); return; }
+  const data = await res.json();
+  if (data.success) {
+    showToast(`Cita movida a ${date} ${time_start}`, 'success');
+  } else {
+    showToast(data.error || 'No se pudo mover la cita', 'error');
+  }
+  loadAgenda();
 }
 
 // ===== NEW BOOKING =====
@@ -553,6 +657,7 @@ async function openBookingDetail(id) {
 
   document.getElementById('bookingDetailActions').innerHTML = `
     ${b.status === 'confirmed' ? `
+      <button class="btn-sm btn-edit" onclick="showEditBookingForm(${b.id})">✎ Editar / Mover</button>
       <button class="btn-sm btn-edit" onclick="updateBookingStatus(${b.id},'completed')">Marcar completada</button>
       <button class="btn-sm btn-delete" onclick="updateBookingStatus(${b.id},'cancelled')">Cancelar cita</button>
       <button class="btn-sm" style="background:#7a0010;color:#fff;border:none" onclick="markNoShow(${b.id}, false)">No presentado</button>
@@ -562,6 +667,65 @@ async function openBookingDetail(id) {
   `;
 
   document.getElementById('bookingDetailModal').classList.remove('hidden');
+}
+
+function showEditBookingForm(id) {
+  const b = agendaBookings.find(x => x.id === id);
+  if (!b) return;
+
+  document.getElementById('bookingDetailContent').innerHTML = `
+    <div class="form-group">
+      <label>Barbero</label>
+      <select id="editBarber" class="select-control">
+        ${allBarbers.filter(br => br.active).map(br => `<option value="${br.id}" ${br.id === b.barber_id ? 'selected' : ''}>${br.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="editDate" class="select-control" value="${b.date}">
+    </div>
+    <div class="form-group">
+      <label>Hora de inicio</label>
+      <input type="time" id="editTime" class="select-control" step="900" value="${b.time_start}">
+      <small style="color:var(--grey)">Duración del servicio: ${b.duration_minutes} min (la hora de fin se recalcula sola)</small>
+    </div>
+    <div class="confirm-error hidden" id="editBookingError"></div>
+  `;
+
+  document.getElementById('bookingDetailActions').innerHTML = `
+    <button class="btn-primary" onclick="saveBookingEdit(${id})">Guardar cambios</button>
+    <button class="btn-secondary" onclick="openBookingDetail(${id})">Cancelar</button>
+  `;
+}
+
+async function saveBookingEdit(id) {
+  const barber_id = document.getElementById('editBarber').value;
+  const date = document.getElementById('editDate').value;
+  const time_start = document.getElementById('editTime').value;
+  const errEl = document.getElementById('editBookingError');
+  errEl.classList.add('hidden');
+
+  if (!date || !time_start) {
+    errEl.textContent = 'Completa fecha y hora';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const res = await adminFetch(`/api/admin/bookings/${id}/reschedule`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ barber_id, date, time_start })
+  });
+  if (!res) return;
+  const data = await res.json();
+  if (data.success) {
+    closeBookingDetail();
+    loadAgenda();
+    showToast('Cita actualizada con éxito', 'success');
+  } else {
+    errEl.textContent = data.error || 'Error al mover la cita';
+    errEl.classList.remove('hidden');
+  }
 }
 
 async function updateBookingStatus(id, status) {
