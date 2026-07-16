@@ -116,7 +116,7 @@ function createApiRouter(dataDir, uploadsDir) {
     const already = db.prepare('SELECT phone FROM verified_phones WHERE phone = ?').get(phone);
     if (already) return res.json({ already_verified: true, sms_configured: smsConfigured() });
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = String(Math.floor(1000 + Math.random() * 9000));
     const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     db.prepare('INSERT INTO phone_verifications (phone, code, expires_at) VALUES (?, ?, ?)').run(phone, code, expires_at);
 
