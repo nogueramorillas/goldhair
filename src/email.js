@@ -60,7 +60,7 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
 <body>
 <div class="wrap">
   <div class="hd">
-    <h1>✂ ${shopName}</h1>
+    <h1>${shopName}</h1>
     <p>Confirmación de cita</p>
   </div>
   <div class="body">
@@ -83,7 +83,7 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
     <p style="font-size:13px;color:#888">Si necesitas cancelar o modificar tu cita, contacta con nosotros con al menos 24 horas de antelación.</p>
   </div>
   <div class="ft">
-    <p class="sc">✂ ${shopName}</p>
+    <p class="sc">${shopName}</p>
     <p>${settings.shop_address || ''}</p>
     <p>© ${new Date().getFullYear()} ${shopName}. Todos los derechos reservados.</p>
   </div>
@@ -93,7 +93,7 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
   await t.sendMail({
     from: `${shopName} <${process.env.GMAIL_USER}>`,
     to: booking.client_email,
-    subject: `✂ Cita confirmada - ${shopName}`,
+    subject: `Cita confirmada - ${shopName}`,
     html
   });
 }
@@ -143,7 +143,7 @@ async function sendVerificationCode(email, code, settings) {
     html: `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#f0f0f0;font-family:Arial,sans-serif">
 <div style="max-width:420px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden">
   <div style="background:#111;padding:28px;text-align:center">
-    <h1 style="margin:0;color:#c8a96e;font-size:22px;letter-spacing:2px">✂ ${shopName}</h1>
+    <h1 style="margin:0;color:#c8a96e;font-size:22px;letter-spacing:2px">${shopName}</h1>
   </div>
   <div style="padding:32px;text-align:center">
     <p style="color:#333;margin:0 0 8px">Tu código de verificación es:</p>
