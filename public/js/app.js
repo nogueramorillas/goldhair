@@ -210,18 +210,48 @@ async function submitVerifyCode() {
   }
 }
 
+let resendCooldownInterval = null;
+
+function startResendCooldown(seconds) {
+  const link = document.getElementById('resendLink');
+  const countdownEl = document.getElementById('resendCountdown');
+  let remaining = seconds;
+
+  link.classList.add('hidden');
+  countdownEl.textContent = ` Podrás reenviar en ${remaining}s`;
+
+  clearInterval(resendCooldownInterval);
+  resendCooldownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(resendCooldownInterval);
+      countdownEl.textContent = '';
+      link.classList.remove('hidden');
+    } else {
+      countdownEl.textContent = ` Podrás reenviar en ${remaining}s`;
+    }
+  }, 1000);
+}
+
 async function resendVerifyCode() {
   const phone = document.getElementById('clientPhone').value.trim();
   const errEl = document.getElementById('verifyError');
   errEl.classList.add('hidden');
   try {
-    await fetch('/api/phone/send-code', {
+    const res = await fetch('/api/phone/send-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone })
     });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'No se pudo reenviar, inténtalo de nuevo';
+      errEl.classList.remove('hidden');
+      return;
+    }
     errEl.textContent = 'Código reenviado';
     errEl.classList.remove('hidden');
+    startResendCooldown(60);
   } catch (e) {
     errEl.textContent = 'No se pudo reenviar, inténtalo de nuevo';
     errEl.classList.remove('hidden');
@@ -291,6 +321,7 @@ async function goToStep(n) {
     document.getElementById('verifyPhoneDisplay').textContent = document.getElementById('clientPhone').value.trim();
     document.getElementById('verifyCodeInput').value = '';
     document.getElementById('verifyError').classList.add('hidden');
+    startResendCooldown(60);
   }
   if (n === 7) renderSummary();
 }
