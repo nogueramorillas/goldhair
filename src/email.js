@@ -45,10 +45,6 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
   .body{padding:30px}
   .body p{color:#333;line-height:1.6;margin:0 0 15px}
   .card{background:#faf7f2;border-left:4px solid #c8a96e;border-radius:6px;padding:20px;margin:20px 0}
-  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
-  .row:last-child{border-bottom:none}
-  .lbl{color:#777;font-size:13px}
-  .val{font-weight:700;color:#111;font-size:14px}
   .badge{display:inline-block;background:#111;color:#c8a96e;padding:4px 12px;border-radius:20px;font-size:12px;letter-spacing:1px;margin-bottom:15px}
   .info{background:#f9f9f9;border-radius:6px;padding:15px;margin:15px 0;font-size:13px;color:#555}
   .info strong{color:#111}
@@ -68,13 +64,15 @@ async function sendBookingConfirmation(booking, service, barber, settings) {
     <p>Tu cita ha sido <strong>confirmada</strong> con éxito. Aquí tienes todos los detalles:</p>
     <span class="badge">RESERVA CONFIRMADA</span>
     <div class="card">
-      <div class="row"><span class="lbl">Servicio</span><span class="val">${service.name}</span></div>
-      <div class="row"><span class="lbl">Barbero</span><span class="val">${barber.name}</span></div>
-      <div class="row"><span class="lbl">Fecha</span><span class="val">${formatDateES(booking.date)}</span></div>
-      <div class="row"><span class="lbl">Hora</span><span class="val">${booking.time_start} - ${booking.time_end}</span></div>
-      <div class="row"><span class="lbl">Duración</span><span class="val">${service.duration_minutes} minutos</span></div>
-      <div class="row"><span class="lbl">Precio</span><span class="val">${service.price}€</span></div>
-      <div class="row"><span class="lbl">Pago</span><span class="val">En local (efectivo o tarjeta)</span></div>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Servicio</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${service.name}</td></tr>
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Barbero</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${barber.name}</td></tr>
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Fecha</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${formatDateES(booking.date)}</td></tr>
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Hora</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${booking.time_start} - ${booking.time_end}</td></tr>
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Duración</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${service.duration_minutes} minutos</td></tr>
+        <tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#777;font-size:13px">Precio</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#111;font-size:14px">${service.price}€</td></tr>
+        <tr><td style="padding:8px 0;color:#777;font-size:13px">Pago</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#111;font-size:14px">En local (efectivo o tarjeta)</td></tr>
+      </table>
     </div>
     <div class="info">
       <strong>📍 Dirección:</strong> ${settings.shop_address || ''}<br>
