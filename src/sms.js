@@ -6,13 +6,12 @@ function isConfigured() {
   return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
 }
 
-async function sendVerificationSMS(phone, code, settings) {
+async function sendVerificationSMS(phone, code) {
   if (!isConfigured()) {
     console.log(`[sms] Twilio no configurado, omitiendo envío (código para ${phone}: ${code})`);
     return;
   }
 
-  const shopName = (settings && settings.shop_name) || 'Gold Hair';
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
@@ -20,7 +19,9 @@ async function sendVerificationSMS(phone, code, settings) {
   const body = new URLSearchParams({
     To: phone,
     From: from,
-    Body: `${shopName}: tu código de verificación es ${code}. Válido 10 minutos.`
+    // Generic on purpose: this Twilio number/account may be shared across
+    // several sites, so the message shouldn't be tied to one business's name.
+    Body: `Código de verificación: ${code}. Válido 10 minutos.`
   });
 
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {

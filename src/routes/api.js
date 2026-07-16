@@ -121,7 +121,7 @@ function createApiRouter(dataDir, uploadsDir) {
     db.prepare('INSERT INTO phone_verifications (phone, code, expires_at) VALUES (?, ?, ?)').run(phone, code, expires_at);
 
     try {
-      await sendVerificationSMS(phone, code, getSettings());
+      await sendVerificationSMS(phone, code);
     } catch (e) {
       console.error('[sms error]', e.message);
       return res.status(500).json({ error: 'No se pudo enviar el SMS. Inténtalo de nuevo.' });
