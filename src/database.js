@@ -228,9 +228,10 @@ async function initDatabase(dataDir) {
   const sc = db.prepare('SELECT COUNT(*) as c FROM services').get();
   if (!sc || sc.c === 0) {
     const ins = db.prepare('INSERT INTO services (name, description, price, duration_minutes, sort_order, photo_url) VALUES (?, ?, ?, ?, ?, ?)');
-    ins.run('Corte Pelo', 'Hombre / Niño', 10, 30, 1, '');
-    ins.run('Cejas',      'Chicos / Chicas', 5, 15, 2, '');
-    ins.run('Afeitar',    '', 6, 20, 3, '');
+    ins.run('Corte de pelo',    'Corte clásico adaptado a tu estilo',                   15, 30, 1, 'https://images.unsplash.com/photo-1634302104565-cc698ee83144?auto=format&fit=crop&w=500&q=80');
+    ins.run('Corte + Barba',    'Corte completo más perfilado y arreglo de barba',       25, 45, 2, 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=500&q=80');
+    ins.run('Arreglo de barba', 'Perfilado y arreglo de barba con navaja',               12, 30, 3, 'https://images.unsplash.com/photo-1630827020718-3433092696e7?auto=format&fit=crop&w=500&q=80');
+    ins.run('Afeitado clásico', 'Afeitado completo con navaja y toalla caliente',        18, 30, 4, 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=500&q=80');
   }
 
   // Limpiar verificaciones antiguas no usadas (más de 15 minutos)
