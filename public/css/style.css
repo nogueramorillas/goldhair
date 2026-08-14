@@ -28,7 +28,7 @@ body {
   min-height: 100vh;
   background:
     linear-gradient(180deg, rgba(10,10,10,.75) 0%, rgba(17,17,17,.82) 60%, rgba(26,18,5,.9) 100%),
-    url('/img/hero-local.png');
+    url('/img/noorbarber-local.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

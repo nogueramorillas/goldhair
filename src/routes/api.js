@@ -346,6 +346,9 @@ function createApiRouter(dataDir, uploadsDir) {
     db.prepare(
       'UPDATE services SET name=?, description=?, price=?, duration_minutes=?, active=?, sort_order=? WHERE id=?'
     ).run(name, description || '', Number(price), Number(duration_minutes), active ? 1 : 0, Number(sort_order) || 0, req.params.id);
+    if ('photo_url' in req.body) {
+      db.prepare('UPDATE services SET photo_url = ? WHERE id = ?').run(req.body.photo_url || '', req.params.id);
+    }
     res.json({ success: true });
   });
 

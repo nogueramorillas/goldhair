@@ -49,7 +49,7 @@ async function start() {
   app.get('/api/health', (req, res) => res.json({ ok: true }));
 
   app.listen(PORT, () => {
-    console.log(`✂  Gold Hair corriendo en http://localhost:${PORT}`);
+    console.log(`✂  Noor Barber corriendo en http://localhost:${PORT}`);
     console.log(`   Datos en: ${DATA_DIR}`);
     console.log(`   Admin: http://localhost:${PORT}/admin  (user: admin / pass: admin123)`);
   });

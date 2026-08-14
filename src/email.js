@@ -103,7 +103,7 @@ async function sendAdminNotification(booking, service, barber, settings) {
     return;
   }
 
-  const shopName = settings.shop_name || 'Gold Hair';
+  const shopName = settings.shop_name || 'Noor Barber';
 
   await t.sendMail({
     from: `${shopName} <${process.env.GMAIL_USER}>`,
