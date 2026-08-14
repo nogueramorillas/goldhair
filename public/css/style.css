@@ -221,7 +221,6 @@ body {
   font-size: 2.5rem;
   color: var(--accent);
   letter-spacing: 2px;
-  text-shadow: var(--text-3d);
 }
 
 .divider {
@@ -304,7 +303,6 @@ body {
   font-size: 1.2rem;
   color: var(--white);
   margin-bottom: 6px;
-  text-shadow: var(--text-3d);
 }
 
 .service-info p {
@@ -324,7 +322,6 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent);
-  text-shadow: var(--text-3d);
 }
 
 .service-duration {
@@ -372,7 +369,7 @@ body {
 }
 
 .info-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.info-card h3 { color: var(--accent); margin-bottom: 6px; font-size: 1.1rem; text-shadow: var(--text-3d); }
+.info-card h3 { color: var(--accent); margin-bottom: 6px; font-size: 1.1rem; }
 .info-card p { color: var(--grey); font-size: 14px; }
 
 /* ===== SOCIAL + MAPS ===== */
@@ -550,7 +547,6 @@ body {
   font-size: 1.6rem;
   color: var(--accent);
   margin-bottom: 24px;
-  text-shadow: var(--text-3d);
 }
 
 /* Steps progress */
