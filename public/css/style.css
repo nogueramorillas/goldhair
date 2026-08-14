@@ -12,6 +12,7 @@
   --border: #2a2a2a;
   --radius: 10px;
   --shadow: 0 8px 32px rgba(0,0,0,.6);
+  --text-3d: 1px 1px 0 rgba(0,0,0,.65), 2px 2px 0 rgba(0,0,0,.55), 3px 3px 0 rgba(0,0,0,.45), 4px 4px 0 rgba(0,0,0,.35), 6px 6px 10px rgba(0,0,0,.5);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,16 +72,36 @@ body {
 }
 
 .shop-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.shop-name-script {
   font-family: 'Pacifico', cursive;
   font-size: clamp(2.5rem, 9vw, 5rem);
   font-weight: 400;
-  letter-spacing: 0;
   line-height: 1.2;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 12px;
+  text-shadow: var(--text-3d);
+}
+
+.shop-name-bold {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.1rem, 4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 10px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: var(--text-3d);
 }
 
 .shop-tagline {
@@ -105,6 +126,7 @@ body {
   transition: all .3s;
   font-family: 'Poppins', sans-serif;
   box-shadow: 0 4px 20px rgba(198,40,40,.4);
+  text-shadow: 1px 1px 0 rgba(0,0,0,.35), 2px 2px 3px rgba(0,0,0,.3);
 }
 
 .btn-reserve:hover {
@@ -178,6 +200,7 @@ body {
   font-size: 2.5rem;
   color: var(--accent);
   letter-spacing: 2px;
+  text-shadow: var(--text-3d);
 }
 
 .divider {
@@ -260,6 +283,7 @@ body {
   font-size: 1.2rem;
   color: var(--white);
   margin-bottom: 6px;
+  text-shadow: var(--text-3d);
 }
 
 .service-info p {
@@ -279,6 +303,7 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent);
+  text-shadow: var(--text-3d);
 }
 
 .service-duration {
@@ -326,7 +351,7 @@ body {
 }
 
 .info-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.info-card h3 { color: var(--accent); margin-bottom: 6px; font-size: 1.1rem; }
+.info-card h3 { color: var(--accent); margin-bottom: 6px; font-size: 1.1rem; text-shadow: var(--text-3d); }
 .info-card p { color: var(--grey); font-size: 14px; }
 
 /* ===== SOCIAL + MAPS ===== */
@@ -504,6 +529,7 @@ body {
   font-size: 1.6rem;
   color: var(--accent);
   margin-bottom: 24px;
+  text-shadow: var(--text-3d);
 }
 
 /* Steps progress */

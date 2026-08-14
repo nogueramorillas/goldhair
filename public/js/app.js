@@ -15,6 +15,25 @@ const state = {
 const DAYS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+function renderShopName(name) {
+  const el = document.getElementById('shopName');
+  el.innerHTML = '';
+  const words = name.trim().split(/\s+/);
+  const first = words.shift();
+
+  const scriptSpan = document.createElement('span');
+  scriptSpan.className = 'shop-name-script';
+  scriptSpan.textContent = first;
+  el.appendChild(scriptSpan);
+
+  if (words.length) {
+    const boldSpan = document.createElement('span');
+    boldSpan.className = 'shop-name-bold';
+    boldSpan.textContent = words.join(' ');
+    el.appendChild(boldSpan);
+  }
+}
+
 async function init() {
   document.getElementById('year').textContent = new Date().getFullYear();
   const [settings, services, barbers] = await Promise.all([
@@ -26,7 +45,7 @@ async function init() {
   state.services = services;
   state.barbers = barbers;
 
-  document.getElementById('shopName').textContent = settings.shop_name || 'Barbería';
+  renderShopName(settings.shop_name || 'Barbería');
   document.getElementById('shopTagline').textContent = settings.shop_tagline || '';
   document.getElementById('footerShopName').textContent = settings.shop_name || 'Barbería';
   document.getElementById('footerAddress').textContent = settings.shop_address || '';
