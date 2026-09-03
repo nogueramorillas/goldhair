@@ -39,12 +39,6 @@ body {
 /* ===== HERO ===== */
 .hero {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(10,10,10,.75) 0%, rgba(17,17,17,.82) 60%, rgba(26,18,5,.9) 100%),
-    url('/img/noorbarber-local.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,7 +52,22 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(47,102,201,.1) 0%, transparent 70%);
+  background-image: url('/img/noorbarber-local.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(1.25) contrast(1.12) saturate(1.2);
+  z-index: 0;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10,10,10,.5) 0%, rgba(17,17,17,.58) 60%, rgba(26,18,5,.68) 100%),
+    radial-gradient(ellipse at center, rgba(47,102,201,.1) 0%, transparent 70%);
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -206,8 +215,9 @@ body {
 .section-header h2 {
   font-family: 'Playfair Display', serif;
   font-size: 2.5rem;
-  color: var(--accent);
+  color: var(--white);
   letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(47,102,201,.6);
 }
 
 .divider {
@@ -309,7 +319,7 @@ body {
 .service-price {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--white);
 }
 
 .service-duration {

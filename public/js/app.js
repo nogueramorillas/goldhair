@@ -71,7 +71,7 @@ function renderServiceCards() {
         <p>${s.description || ''}</p>
         <div class="service-meta">
           <span class="service-price">${s.price}€</span>
-          <span class="service-duration">⏱ ${s.duration_minutes} min</span>
+          <span class="service-duration">${s.duration_minutes} min</span>
         </div>
       </div>
     </div>
