@@ -68,14 +68,6 @@ body {
   max-width: 600px;
 }
 
-.scissors-icon {
-  font-size: 48px;
-  color: var(--accent);
-  display: block;
-  margin-bottom: 16px;
-  animation: float 3s ease-in-out infinite;
-}
-
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(-5deg); }
   50% { transform: translateY(-10px) rotate(5deg); }
@@ -85,7 +77,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 36px;
 }
 
 .shop-name-script {
@@ -112,14 +104,6 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: var(--text-3d);
-}
-
-.shop-tagline {
-  font-size: 1rem;
-  color: var(--grey);
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  margin-bottom: 40px;
 }
 
 .btn-reserve {

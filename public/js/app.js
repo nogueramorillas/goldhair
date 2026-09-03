@@ -46,7 +46,6 @@ async function init() {
   state.barbers = barbers;
 
   renderShopName(settings.shop_name || 'Barbería');
-  document.getElementById('shopTagline').textContent = settings.shop_tagline || '';
   document.getElementById('footerShopName').textContent = settings.shop_name || 'Barbería';
   document.getElementById('footerAddress').textContent = settings.shop_address || '';
   document.getElementById('footerPhone').textContent = settings.shop_phone || '';
