@@ -56,7 +56,7 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: brightness(1.25) contrast(1.12) saturate(1.2);
+  filter: brightness(1.1) contrast(1.1) saturate(1.15);
   z-index: 0;
 }
 
