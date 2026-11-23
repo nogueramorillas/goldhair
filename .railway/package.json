@@ -1,0 +1,8 @@
+{
+  "name": "goldhair-railway-config",
+  "private": true,
+  "description": "SDK de Railway para .railway/railway.ts. Solo lo usan `railway config plan/apply`; la app no lo necesita.",
+  "devDependencies": {
+    "railway": "^3.17.0"
+  }
+}

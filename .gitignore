@@ -5,3 +5,4 @@ data/*.db-shm
 data/*.db-wal
 public/uploads/*
 !public/uploads/.gitkeep
+.railway/node_modules
